@@ -34,6 +34,16 @@ public class MainView extends JFrame {
     private Orcamento orcamentoEditando = null; // Para rastrear o orçamento em edição
 
     public MainView() {
+        // Exibir aviso de restrição com crédito ao criador
+        JOptionPane.showMessageDialog(null,
+                "Este programa é de distribuição restrita.\n" +
+                        "Criado por: Moacir Pereira" +
+                        " Engenheiro de Computação\n" +
+                        "GitHub: MoacirJr10\n" +
+                        "Uso autorizado apenas com permissão do criador.",
+                "Aviso de Restrição",
+                JOptionPane.INFORMATION_MESSAGE);
+
         setTitle("Orçamento Móveis Planejados");
         setSize(1000, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -340,7 +350,7 @@ public class MainView extends JFrame {
 
     private void salvarOrcamento() {
         Cliente cliente = (Cliente) comboClientes.getSelectedItem();
-        if (cliente != null && !modelItensOrcamento.isEmpty()) {
+        if (cliente != null && modelItensOrcamento.size() > 0) {
             Orcamento orc = new Orcamento(cliente, new Date());
             for (int i = 0; i < modelItensOrcamento.size(); i++) {
                 orc.adicionarItem(modelItensOrcamento.get(i).getItem(), modelItensOrcamento.get(i).getQuantidade());

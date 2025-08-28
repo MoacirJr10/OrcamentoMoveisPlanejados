@@ -1,6 +1,7 @@
 dao\ItemDAO.class
 dao\DatabaseConnection.class
 service\OrcamentoService.class
+view\MainView$1.class
 dao\OrcamentoDAO.class
 Main.class
 model\Orcamento.class
