@@ -33,4 +33,5 @@ public class Item {
         String dim = dimensao.isEmpty() ? "" : " (" + dimensao + ")";
         return descricao + dim + " - R$ " + precoUnitario;
     }
+
 }

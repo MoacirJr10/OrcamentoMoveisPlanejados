@@ -8,7 +8,7 @@ public class Orcamento {
     private int id;
     private Cliente cliente;
     private Date data;
-    private List<OrcamentoItem> itens = new ArrayList<>();
+    private final List<OrcamentoItem> itens = new ArrayList<>();
     private double total;
 
     // Construtores

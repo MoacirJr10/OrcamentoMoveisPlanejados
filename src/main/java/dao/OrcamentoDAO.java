@@ -78,4 +78,45 @@ public class OrcamentoDAO {
         }
         return itens;
     }
+    public void update(Orcamento orcamento) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM orcamento_itens WHERE orcamento_id = ?")) {
+                stmt.setInt(1, orcamento.getId());
+                stmt.executeUpdate();
+            }
+            String sqlItem = "INSERT INTO orcamento_itens (orcamento_id, item_id, quantidade) VALUES (?, ?, ?)";
+            try (PreparedStatement stmtItem = conn.prepareStatement(sqlItem)) {
+                for (OrcamentoItem oi : orcamento.getItens()) {
+                    stmtItem.setInt(1, orcamento.getId());
+                    stmtItem.setInt(2, oi.getItem().getId());
+                    stmtItem.setInt(3, oi.getQuantidade());
+                    stmtItem.executeUpdate();
+                }
+            }
+            // Atualizar total e data, se necessário
+            String sqlOrc = "UPDATE orcamentos SET total = ?, data = ? WHERE id = ?";
+            try (PreparedStatement stmtOrc = conn.prepareStatement(sqlOrc)) {
+                stmtOrc.setDouble(1, orcamento.getTotal());
+                stmtOrc.setDate(2, new java.sql.Date(orcamento.getData().getTime()));
+                stmtOrc.setInt(3, orcamento.getId());
+                stmtOrc.executeUpdate();
+            }
+            conn.commit();
+        }
+    }
+    public void delete(int id) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM orcamento_itens WHERE orcamento_id = ?")) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+            }
+            try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM orcamentos WHERE id = ?")) {
+                stmt.setInt(1, id);
+                stmt.executeUpdate();
+            }
+            conn.commit();
+        }
+    }
 }

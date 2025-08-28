@@ -19,7 +19,7 @@ import java.util.List;
 
 public class MainView extends JFrame {
     private final OrcamentoService service = new OrcamentoService();
-    private final OrcamentoDAO orcamentoDAO = new OrcamentoDAO(); // Adicionado para carregar itens
+    private final OrcamentoDAO orcamentoDAO = new OrcamentoDAO(); // Adicionado para carregar e salvar itens
 
     private JComboBox<Cliente> comboClientes;
     private JList<Item> listItensDisponiveis;
@@ -31,6 +31,7 @@ public class MainView extends JFrame {
     private final DefaultListModel<Orcamento> modelOrcamentos = new DefaultListModel<>();
     private JButton btnEditarCliente, btnDeletarCliente, btnEditarItem, btnDeletarItem;
     private JComboBox<String> comboFiltroClientes; // Filter budgets by client
+    private Orcamento orcamentoEditando = null; // Para rastrear o orçamento em edição
 
     public MainView() {
         setTitle("Orçamento Móveis Planejados");
@@ -105,6 +106,16 @@ public class MainView extends JFrame {
         panelFiltro.add(new JLabel("Filtrar por Cliente:"));
         panelFiltro.add(comboFiltroClientes);
         panelOrcamentos.add(panelFiltro, BorderLayout.SOUTH);
+
+        // Botões de edição e deleção
+        JPanel panelAcoesOrcamento = new JPanel(new FlowLayout());
+        JButton btnEditarOrcamento = new JButton("Editar Orçamento");
+        JButton btnDeletarOrcamento = new JButton("Deletar Orçamento");
+        btnEditarOrcamento.addActionListener(e -> editarOrcamentoSelecionado());
+        btnDeletarOrcamento.addActionListener(e -> deletarOrcamentoSelecionado());
+        panelAcoesOrcamento.add(btnEditarOrcamento);
+        panelAcoesOrcamento.add(btnDeletarOrcamento);
+        panelOrcamentos.add(panelAcoesOrcamento, BorderLayout.SOUTH);
 
         // Montar o split central
         JSplitPane splitRight = new JSplitPane(JSplitPane.VERTICAL_SPLIT, panelOrcamento, panelOrcamentos);
@@ -314,7 +325,12 @@ public class MainView extends JFrame {
                 if (qtd <= 0) {
                     throw new IllegalArgumentException("Quantidade deve ser positiva.");
                 }
-                modelItensOrcamento.addElement(new OrcamentoItem(selected, qtd));
+                if (orcamentoEditando != null) {
+                    orcamentoEditando.adicionarItem(selected, qtd);
+                    atualizarModelItensOrcamento();
+                } else {
+                    modelItensOrcamento.addElement(new OrcamentoItem(selected, qtd));
+                }
                 txtQuantidade.setText("");
             } catch (IllegalArgumentException e) {
                 JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
@@ -324,7 +340,7 @@ public class MainView extends JFrame {
 
     private void salvarOrcamento() {
         Cliente cliente = (Cliente) comboClientes.getSelectedItem();
-        if (cliente != null && modelItensOrcamento.size() > 0) {
+        if (cliente != null && !modelItensOrcamento.isEmpty()) {
             Orcamento orc = new Orcamento(cliente, new Date());
             for (int i = 0; i < modelItensOrcamento.size(); i++) {
                 orc.adicionarItem(modelItensOrcamento.get(i).getItem(), modelItensOrcamento.get(i).getQuantidade());
@@ -334,6 +350,7 @@ public class MainView extends JFrame {
                 JOptionPane.showMessageDialog(this, "Orçamento salvo!");
                 modelItensOrcamento.clear();
                 carregarDados();
+                orcamentoEditando = null; // Resetar edição
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(this, "Erro: " + e.getMessage());
             }
@@ -345,7 +362,6 @@ public class MainView extends JFrame {
     private void enviarOrcamentoSelecionado() {
         Orcamento selected = listOrcamentos.getSelectedValue();
         if (selected != null) {
-            // Carregar os itens do orçamento selecionado
             try {
                 List<OrcamentoItem> itensOrcamento = carregarItensOrcamento(selected.getId());
                 modelItensOrcamento.clear();
@@ -353,7 +369,6 @@ public class MainView extends JFrame {
                     modelItensOrcamento.addElement(item);
                 }
 
-                // Obter os índices dos itens selecionados, se houver
                 int[] selectedIndices = listItensOrcamento.getSelectedIndices();
                 List<OrcamentoItem> itensSelecionados = new ArrayList<>();
                 if (selectedIndices.length > 0) {
@@ -361,17 +376,14 @@ public class MainView extends JFrame {
                         itensSelecionados.add(modelItensOrcamento.getElementAt(index));
                     }
                 } else {
-                    // Se nenhum item selecionado, usar todos os itens do orçamento
                     itensSelecionados.addAll(itensOrcamento);
                 }
 
-                // Criar uma cópia do orçamento com os itens selecionados (ou todos, se nenhum selecionado)
                 Orcamento orcamentoFiltrado = new Orcamento(selected.getCliente(), selected.getData());
                 orcamentoFiltrado.setId(selected.getId());
                 orcamentoFiltrado.setTotal(calcularTotalItens(itensSelecionados));
                 orcamentoFiltrado.getItens().addAll(itensSelecionados);
 
-                // Gerar a mensagem de pré-visualização
                 String mensagem = service.gerarMensagemOrcamento(orcamentoFiltrado);
                 int resposta = JOptionPane.showConfirmDialog(this,
                         "Pré-visualização da mensagem:\n\n" + mensagem + "\n\nDeseja enviar esta mensagem?",
@@ -379,7 +391,6 @@ public class MainView extends JFrame {
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.INFORMATION_MESSAGE);
 
-                // Enviar apenas se o usuário confirmar
                 if (resposta == JOptionPane.YES_OPTION) {
                     try {
                         service.enviarOrcamentoViaWhatsApp(orcamentoFiltrado);
@@ -393,6 +404,112 @@ public class MainView extends JFrame {
             }
         } else {
             JOptionPane.showMessageDialog(this, "Selecione um orçamento salvo na lista.");
+        }
+    }
+
+    private void editarOrcamentoSelecionado() {
+        Orcamento selected = listOrcamentos.getSelectedValue();
+        if (selected != null) {
+            try {
+                orcamentoEditando = new Orcamento(selected.getCliente(), selected.getData());
+                orcamentoEditando.setId(selected.getId());
+                List<OrcamentoItem> itens = carregarItensOrcamento(selected.getId());
+                for (OrcamentoItem item : itens) {
+                    orcamentoEditando.adicionarItem(item.getItem(), item.getQuantidade());
+                }
+
+                JDialog editDialog = new JDialog(this, "Editar Orçamento", true);
+                editDialog.setLayout(new BorderLayout(10, 10));
+                editDialog.setSize(400, 300);
+
+                JLabel labelInfo = new JLabel("Cliente: " + selected.getCliente().getNome() + " | Data: " + new java.text.SimpleDateFormat("dd-MM-yyyy").format(selected.getData()));
+                editDialog.add(labelInfo, BorderLayout.NORTH);
+
+                JList<OrcamentoItem> listEditItens = new JList<>(modelItensOrcamento);
+                listEditItens.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                JScrollPane scrollEdit = new JScrollPane(listEditItens);
+                editDialog.add(scrollEdit, BorderLayout.CENTER);
+
+                JPanel panelButtons = new JPanel(new FlowLayout());
+                JButton btnRemover = new JButton("Remover Itens Selecionados");
+                JButton btnAdicionarNovo = new JButton("Adicionar Novo Item");
+                JButton btnSalvar = new JButton("Salvar Alterações");
+                JButton btnCancelar = new JButton("Cancelar");
+
+                btnRemover.addActionListener(e -> {
+                    int[] indices = listEditItens.getSelectedIndices();
+                    for (int i = indices.length - 1; i >= 0; i--) {
+                        modelItensOrcamento.remove(indices[i]);
+                        orcamentoEditando.getItens().remove(indices[i]);
+                    }
+                    orcamentoEditando.setTotal(calcularTotalItens(new ArrayList<>(orcamentoEditando.getItens())));
+                });
+
+                btnAdicionarNovo.addActionListener(e -> adicionarItemAoOrcamento());
+
+                btnSalvar.addActionListener(e -> {
+                    try {
+                        service.atualizarOrcamento(orcamentoEditando);
+                        JOptionPane.showMessageDialog(editDialog, "Orçamento atualizado com sucesso!");
+                        carregarDados();
+                        editDialog.dispose();
+                        orcamentoEditando = null;
+                    } catch (SQLException ex) {
+                        JOptionPane.showMessageDialog(editDialog, "Erro ao salvar: " + ex.getMessage());
+                    }
+                });
+
+                btnCancelar.addActionListener(e -> {
+                    editDialog.dispose();
+                    orcamentoEditando = null;
+                });
+
+                panelButtons.add(btnRemover);
+                panelButtons.add(btnAdicionarNovo);
+                panelButtons.add(btnSalvar);
+                panelButtons.add(btnCancelar);
+                editDialog.add(panelButtons, BorderLayout.SOUTH);
+
+                atualizarModelItensOrcamento();
+                editDialog.setLocationRelativeTo(this);
+                editDialog.setVisible(true);
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(this, "Erro ao carregar itens para edição: " + e.getMessage());
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Selecione um orçamento para editar.");
+        }
+    }
+
+    private void deletarOrcamentoSelecionado() {
+        Orcamento selected = listOrcamentos.getSelectedValue();
+        if (selected != null) {
+            int resposta = JOptionPane.showConfirmDialog(this,
+                    "Tem certeza que deseja deletar o orçamento de " + selected.getCliente().getNome() +
+                            " (Data: " + new java.text.SimpleDateFormat("dd-MM-yyyy").format(selected.getData()) + ")?",
+                    "Confirmação de Deleção",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (resposta == JOptionPane.YES_OPTION) {
+                try {
+                    service.deletarOrcamento(selected.getId());
+                    JOptionPane.showMessageDialog(this, "Orçamento deletado com sucesso!");
+                    carregarDados(); // Recarrega a lista de orçamentos
+                } catch (SQLException e) {
+                    JOptionPane.showMessageDialog(this, "Erro ao deletar o orçamento: " + e.getMessage());
+                }
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Selecione um orçamento para deletar.");
+        }
+    }
+
+    private void atualizarModelItensOrcamento() {
+        modelItensOrcamento.clear();
+        if (orcamentoEditando != null) {
+            for (OrcamentoItem item : orcamentoEditando.getItens()) {
+                modelItensOrcamento.addElement(item);
+            }
         }
     }
 

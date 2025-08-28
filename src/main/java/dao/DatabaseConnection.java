@@ -10,11 +10,12 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 import java.util.Properties;
 
 public class DatabaseConnection {
     private static final Logger logger = LoggerFactory.getLogger(DatabaseConnection.class);
-    private static HikariDataSource dataSource;
+    private static final HikariDataSource dataSource;
 
     static {
         try {
@@ -27,7 +28,7 @@ public class DatabaseConnection {
             config.setDriverClassName(props.getProperty("jdbc.driver"));
             config.setMaximumPoolSize(Integer.parseInt(props.getProperty("hikaricp.maxPoolSize", "10")));
             config.setMinimumIdle(Integer.parseInt(props.getProperty("hikaricp.minIdle", "5")));
-            config.addDataSourceProperty("cachePrepStmts", "true");
+            config.addDataSourceProperty("cachePrepStats", "true");
             config.addDataSourceProperty("prepStmtCacheSize", "250");
             config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
 
@@ -56,8 +57,8 @@ public class DatabaseConnection {
     private static void initializeSchema() throws SQLException {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
-            String schemaSql = new String(DatabaseConnection.class.getClassLoader()
-                    .getResourceAsStream("schema.sql").readAllBytes());
+            String schemaSql = new String(Objects.requireNonNull(DatabaseConnection.class.getClassLoader()
+                    .getResourceAsStream("schema.sql")).readAllBytes());
             String[] statements = schemaSql.split(";");
             for (String sql : statements) {
                 if (!sql.trim().isEmpty()) {

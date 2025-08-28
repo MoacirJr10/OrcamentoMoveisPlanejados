@@ -1,12 +1,10 @@
 package dao;
 
 import model.Cliente;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,14 +12,37 @@ public class ClienteDAO {
     public void create(Cliente cliente) throws SQLException {
         String sql = "INSERT INTO clientes (nome, telefone, endereco) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, cliente.getNome());
             stmt.setString(2, cliente.getTelefone());
             stmt.setString(3, cliente.getEndereco());
             stmt.executeUpdate();
-            ResultSet rs = stmt.getGeneratedKeys();
-            if (rs.next()) cliente.setId(rs.getInt(1));
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    cliente.setId(generatedKeys.getInt(1));
+                }
+            }
         }
+    }
+
+    public List<Cliente> readAll() throws SQLException {
+        List<Cliente> clientes = new ArrayList<>();
+        String sql = "SELECT * FROM clientes";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Cliente c = new Cliente(
+                        rs.getString("nome"),
+                        rs.getString("telefone"),
+                        rs.getString("endereco")
+                );
+                c.setId(rs.getInt("id"));
+                clientes.add(c);
+            }
+        }
+        return clientes;
     }
 
     public void update(Cliente cliente) throws SQLException {
@@ -43,23 +64,5 @@ public class ClienteDAO {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         }
-    }
-
-    public List<Cliente> readAll() throws SQLException {
-        String sql = "SELECT * FROM clientes";
-        List<Cliente> clientes = new ArrayList<>();
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            while (rs.next()) {
-                Cliente c = new Cliente();
-                c.setId(rs.getInt("id"));
-                c.setNome(rs.getString("nome"));
-                c.setTelefone(rs.getString("telefone"));
-                c.setEndereco(rs.getString("endereco"));
-                clientes.add(c);
-            }
-        }
-        return clientes;
     }
 }

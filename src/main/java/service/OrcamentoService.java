@@ -46,11 +46,18 @@ public class OrcamentoService {
         orcamentoDAO.create(orcamento);
     }
 
+    public void atualizarOrcamento(Orcamento orcamento) throws SQLException {
+        orcamentoDAO.update(orcamento);
+    }
+
+    public void deletarOrcamento(int id) throws SQLException {
+        orcamentoDAO.delete(id);
+    }
+
     public List<Orcamento> listarOrcamentos() throws SQLException {
         return orcamentoDAO.readAll();
     }
 
-    // Enviar para um orçamento específico com itens selecionados
     public void enviarOrcamentoViaWhatsApp(Orcamento orcamento) {
         String mensagem = gerarMensagemOrcamento(orcamento);
         String telefone = orcamento.getCliente().getTelefone();
@@ -60,9 +67,7 @@ public class OrcamentoService {
             Desktop desktop = Desktop.getDesktop();
             desktop.browse(URI.create(url));
         } catch (IOException e) {
-            // Exibir mensagem de erro ao usuário em vez de apenas printStackTrace
             System.err.println("Erro ao abrir o WhatsApp: " + e.getMessage());
-            // Você pode integrar isso com uma interface (ex.: JOptionPane) se desejar
         }
     }
 
@@ -70,7 +75,7 @@ public class OrcamentoService {
         StringBuilder sb = new StringBuilder();
         sb.append("*Orçamento de Móveis Planejados*\n\n");
         sb.append("*Cliente:* ").append(orcamento.getCliente().getNome()).append("\n");
-        sb.append("*Telefone:* ").append(orcamento.getCliente().getTelefone()).append("\n"); // Adicionado para separação clara
+        sb.append("*Telefone:* ").append(orcamento.getCliente().getTelefone()).append("\n");
         sb.append("*Endereço:* ").append(orcamento.getCliente().getEndereco()).append("\n");
         sb.append("*Data:* ").append(sdf.format(orcamento.getData())).append("\n\n");
         sb.append("*Itens:*\n");
@@ -87,7 +92,6 @@ public class OrcamentoService {
         return sb.toString();
     }
 
-    // Novos métodos para update e delete
     public void atualizarItem(Item item) throws SQLException {
         itemDAO.update(item);
     }
