@@ -27,3 +27,12 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+# Database
+orcamento_db.mv.db
+
+# Log files
+*.log
+
+# Build output
+/target/
