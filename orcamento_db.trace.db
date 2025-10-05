@@ -1,0 +1,3 @@
+2025-09-22 17:22:19.349053-03:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Value too long for column "DIMENSAO CHARACTER VARYING(50)": "'40cm de largura 30cm de comprimento 80 cm de altura' (51)"; SQL statement:
+INSERT INTO itens (descricao, preco_unitario, dimensao) VALUES (?, ?, ?) [22001-224]

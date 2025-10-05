@@ -62,6 +62,7 @@ public class OrcamentoDAO {
         return orcamentos;
     }
 
+    // Este método agora é privado, pois só precisa ser usado dentro desta classe
     public List<OrcamentoItem> carregarItensOrcamento(Connection conn, int orcamentoId) throws SQLException {
         String sql = "SELECT i.id, i.descricao, i.preco_unitario, i.dimensao, oi.quantidade " +
                 "FROM orcamento_itens oi JOIN itens i ON oi.item_id = i.id WHERE oi.orcamento_id = ?";
@@ -78,6 +79,14 @@ public class OrcamentoDAO {
         }
         return itens;
     }
+
+    // Novo método público que gerencia sua própria conexão
+    public List<OrcamentoItem> carregarItensOrcamento(int orcamentoId) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return carregarItensOrcamento(conn, orcamentoId);
+        }
+    }
+
     public void update(Orcamento orcamento) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
