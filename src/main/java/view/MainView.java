@@ -34,7 +34,7 @@ public class MainView extends JFrame {
     private JList<OrcamentoItem> listItensOrcamento;
     private final DefaultListModel<OrcamentoItem> modelItensOrcamento = new DefaultListModel<>();
     private JTextField txtQuantidade;
-    private JButton btnAdicionarItem, btnCriarOrcamento, btnEnviarWhatsApp, btnCadastrarCliente, btnCadastrarItem;
+    private JButton btnAdicionarItem, btnCriarOrcamento, btnEnviarWhatsApp, btnCadastrarCliente, btnCadastrarItem, btnAjuda;
     private JList<Orcamento> listOrcamentos;
     private final DefaultListModel<Orcamento> modelOrcamentos = new DefaultListModel<>();
     private JButton btnEditarCliente, btnDeletarCliente, btnEditarItem, btnDeletarItem;
@@ -203,8 +203,10 @@ public class MainView extends JFrame {
         panelBotoes.setBackground(new Color(255, 255, 255));
         btnCriarOrcamento = createStyledButton("Salvar Orçamento");
         btnEnviarWhatsApp = createStyledButton("Enviar via WhatsApp");
+        btnAjuda = createStyledButton("Ajuda");
         panelBotoes.add(btnCriarOrcamento);
         panelBotoes.add(btnEnviarWhatsApp);
+        panelBotoes.add(btnAjuda);
         add(panelBotoes, BorderLayout.SOUTH);
 
         // Eventos
@@ -218,6 +220,7 @@ public class MainView extends JFrame {
         btnCriarOrcamento.addActionListener(e -> salvarOrcamento());
         btnEnviarWhatsApp.addActionListener(e -> enviarOrcamentoSelecionado());
         comboFiltroClientes.addActionListener(e -> filtrarOrcamentos());
+        btnAjuda.addActionListener(e -> mostrarAjuda());
 
         // Ouvinte para sincronizar itens ao selecionar um orçamento
         listOrcamentos.addListSelectionListener(new ListSelectionListener() {
@@ -606,5 +609,41 @@ public class MainView extends JFrame {
             total += item.getItem().getPrecoUnitario() * item.getQuantidade();
         }
         return total;
+    }
+
+    private void mostrarAjuda() {
+        String ajudaHtml = "<html>" +
+                "<body style='width: 400px; font-family: Segoe UI, sans-serif; font-size: 12px;'>" +
+                "<h1>Guia de Ajuda</h1>" +
+                "<h2>Gerenciamento de Clientes</h2>" +
+                "<p><b>Cadastrar:</b> Clique em 'Cadastrar Cliente' para adicionar um novo cliente.</p>" +
+                "<p><b>Editar:</b> Selecione um cliente na lista suspensa e clique em 'Editar Cliente'.</p>" +
+                "<p><b>Deletar:</b> Selecione um cliente e clique em 'Deletar Cliente'.</p>" +
+                "<hr>" +
+                "<h2>Gerenciamento de Itens</h2>" +
+                "<p><b>Listagem:</b> Os itens cadastrados no sistema aparecem em 'Itens Disponíveis'.</p>" +
+                "<p><b>Cadastrar:</b> Clique em 'Novo Item' (abaixo da lista de itens do orçamento) para adicionar um novo tipo de item ao sistema.</p>" +
+                "<p><b>Editar/Deletar:</b> Selecione um item na lista 'Itens Disponíveis' e use os botões 'Editar Item' ou 'Deletar Item' abaixo dela.</p>" +
+                "<hr>" +
+                "<h2>Criação de Orçamentos</h2>" +
+                "<ol>" +
+                "<li>Selecione um cliente na lista suspensa no topo.</li>" +
+                "<li>Na lista 'Itens Disponíveis', selecione o item desejado.</li>" +
+                "<li>Digite a quantidade no campo 'Quantidade'.</li>" +
+                "<li>Clique em 'Adicionar Item' para incluí-lo no orçamento atual.</li>" +
+                "<li>Repita para todos os itens desejados.</li>" +
+                "<li>Clique em 'Salvar Orçamento' para gravar.</li>" +
+                "</ol>" +
+                "<hr>" +
+                "<h2>Orçamentos Salvos</h2>" +
+                "<p><b>Visualizar:</b> A lista 'Orçamentos Salvos' mostra todos os orçamentos. Use o filtro para ver orçamentos de um cliente específico.</p>" +
+                "<p><b>Carregar Itens:</b> Clique em um orçamento na lista para ver os itens que o compõem na lista 'Itens no Orçamento'.</p>" +
+                "<p><b>Editar:</b> Selecione um orçamento e clique em 'Editar Orçamento'. Uma nova janela permitirá adicionar ou remover itens.</p>" +
+                "<p><b>Deletar:</b> Selecione um orçamento e clique em 'Deletar Orçamento'.</p>" +
+                "<p><b>Enviar via WhatsApp:</b> Selecione um orçamento e clique em 'Enviar via WhatsApp'. Uma pré-visualização será exibida antes do envio.</p>" +
+                "</body>" +
+                "</html>";
+
+        JOptionPane.showMessageDialog(this, new JLabel(ajudaHtml), "Ajuda", JOptionPane.INFORMATION_MESSAGE);
     }
 }
