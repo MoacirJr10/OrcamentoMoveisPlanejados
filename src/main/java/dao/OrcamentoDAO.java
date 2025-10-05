@@ -17,7 +17,7 @@ public class OrcamentoDAO {
             try (PreparedStatement stmtOrc = conn.prepareStatement(sqlOrc, Statement.RETURN_GENERATED_KEYS)) {
                 stmtOrc.setInt(1, orcamento.getCliente().getId());
                 stmtOrc.setDate(2, new java.sql.Date(orcamento.getData().getTime()));
-                stmtOrc.setDouble(3, orcamento.getTotal());
+                stmtOrc.setBigDecimal(3, orcamento.getTotal());
                 stmtOrc.executeUpdate();
                 ResultSet rs = stmtOrc.getGeneratedKeys();
                 if (rs.next()) orcamento.setId(rs.getInt(1));
@@ -53,7 +53,7 @@ public class OrcamentoDAO {
                 c.setId(rs.getInt("cliente_id"));
                 Orcamento o = new Orcamento(c, rs.getDate("data"));
                 o.setId(rs.getInt("id"));
-                o.setTotal(rs.getDouble("total"));
+                o.setTotal(rs.getBigDecimal("total"));
                 // Carregar itens
                 o.getItens().addAll(carregarItensOrcamento(conn, o.getId()));
                 orcamentos.add(o);
@@ -62,7 +62,6 @@ public class OrcamentoDAO {
         return orcamentos;
     }
 
-    // Este método agora é privado, pois só precisa ser usado dentro desta classe
     public List<OrcamentoItem> carregarItensOrcamento(Connection conn, int orcamentoId) throws SQLException {
         String sql = "SELECT i.id, i.descricao, i.preco_unitario, i.dimensao, oi.quantidade " +
                 "FROM orcamento_itens oi JOIN itens i ON oi.item_id = i.id WHERE oi.orcamento_id = ?";
@@ -71,7 +70,7 @@ public class OrcamentoDAO {
             stmt.setInt(1, orcamentoId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Item i = new Item(rs.getString("descricao"), rs.getDouble("preco_unitario"), rs.getString("dimensao"));
+                    Item i = new Item(rs.getString("descricao"), rs.getBigDecimal("preco_unitario"), rs.getString("dimensao"));
                     i.setId(rs.getInt("id"));
                     itens.add(new OrcamentoItem(i, rs.getInt("quantidade")));
                 }
@@ -80,7 +79,6 @@ public class OrcamentoDAO {
         return itens;
     }
 
-    // Novo método público que gerencia sua própria conexão
     public List<OrcamentoItem> carregarItensOrcamento(int orcamentoId) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection()) {
             return carregarItensOrcamento(conn, orcamentoId);
@@ -106,7 +104,7 @@ public class OrcamentoDAO {
             // Atualizar total e data, se necessário
             String sqlOrc = "UPDATE orcamentos SET total = ?, data = ? WHERE id = ?";
             try (PreparedStatement stmtOrc = conn.prepareStatement(sqlOrc)) {
-                stmtOrc.setDouble(1, orcamento.getTotal());
+                stmtOrc.setBigDecimal(1, orcamento.getTotal());
                 stmtOrc.setDate(2, new java.sql.Date(orcamento.getData().getTime()));
                 stmtOrc.setInt(3, orcamento.getId());
                 stmtOrc.executeUpdate();

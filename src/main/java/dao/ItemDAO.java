@@ -1,6 +1,7 @@
 package dao;
 
 import model.Item;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,7 +15,7 @@ public class ItemDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, item.getDescricao());
-            stmt.setDouble(2, item.getPrecoUnitario());
+            stmt.setBigDecimal(2, item.getPrecoUnitario());
             stmt.setString(3, item.getDimensao());
             stmt.executeUpdate();
 
@@ -35,7 +36,7 @@ public class ItemDAO {
             while (rs.next()) {
                 Item i = new Item(
                         rs.getString("descricao"),
-                        rs.getDouble("preco_unitario"),
+                        rs.getBigDecimal("preco_unitario"),
                         rs.getString("dimensao")
                 );
                 i.setId(rs.getInt("id"));
@@ -50,7 +51,7 @@ public class ItemDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, item.getDescricao());
-            stmt.setDouble(2, item.getPrecoUnitario());
+            stmt.setBigDecimal(2, item.getPrecoUnitario());
             stmt.setString(3, item.getDimensao());
             stmt.setInt(4, item.getId());
             stmt.executeUpdate();
