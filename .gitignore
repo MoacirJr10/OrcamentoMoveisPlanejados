@@ -36,3 +36,7 @@ orcamento_db.mv.db
 
 # Build output
 /target/
+.idea/
+*.iml
+*.trace.db
+*.mv.db
