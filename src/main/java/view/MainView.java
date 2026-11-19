@@ -19,6 +19,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -354,7 +355,7 @@ public class MainView extends JFrame {
         String dimensao = JOptionPane.showInputDialog("Dimensão (ex: 2m x 1m):");
         if (descricao != null && precoStr != null) {
             try {
-                double preco = Double.parseDouble(precoStr);
+                BigDecimal preco = parsePreco(precoStr);
                 if (descricao.trim().isEmpty()) {
                     throw new IllegalArgumentException("Descrição não pode ser vazia.");
                 }
@@ -377,7 +378,9 @@ public class MainView extends JFrame {
             String novoPrecoStr = JOptionPane.showInputDialog("Novo Preço:", selected.getPrecoUnitario());
             String novaDimensao = JOptionPane.showInputDialog("Nova Dimensão:", selected.getDimensao());
             try {
-                double novoPreco = Double.parseDouble(novoPrecoStr);
+                if (novaDescricao == null || novoPrecoStr == null || novaDimensao == null) return;
+                BigDecimal novoPreco = parsePreco(novoPrecoStr);
+                if (novaDescricao.isBlank()) throw new NumberFormatException("Descrição vazia");
                 selected.setDescricao(novaDescricao);
                 selected.setPrecoUnitario(novoPreco);
                 selected.setDimensao(novaDimensao);
@@ -603,10 +606,16 @@ public class MainView extends JFrame {
         }
     }
 
-    private double calcularTotalItens(List<OrcamentoItem> itens) {
-        double total = 0.0;
+    private static BigDecimal parsePreco(String texto) {
+        BigDecimal valor = new BigDecimal(texto.trim().replace(",", "."));
+        if (valor.signum() < 0 || valor.scale() > 2 || valor.compareTo(new BigDecimal("99999999.99")) > 0) throw new NumberFormatException("Preço inválido");
+        return valor;
+    }
+
+    private BigDecimal calcularTotalItens(List<OrcamentoItem> itens) {
+        BigDecimal total = BigDecimal.ZERO;
         for (OrcamentoItem item : itens) {
-            total += item.getItem().getPrecoUnitario() * item.getQuantidade();
+            total = total.add(item.getItem().getPrecoUnitario().multiply(BigDecimal.valueOf(item.getQuantidade())));
         }
         return total;
     }

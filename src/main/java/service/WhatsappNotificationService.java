@@ -5,6 +5,9 @@ import model.Orcamento;
 import model.OrcamentoItem;
 
 import java.awt.Desktop;
+import java.math.BigDecimal;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -14,7 +17,7 @@ import java.text.SimpleDateFormat;
 
 public class WhatsappNotificationService {
 
-    private static final DecimalFormat df = new DecimalFormat("#,##0.00"); // Formato R$ 300,00
+    private static final DecimalFormat df = new DecimalFormat("#,##0.00", DecimalFormatSymbols.getInstance(Locale.forLanguageTag("pt-BR"))); // Formato R$ 300,00
     private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy"); // Formato data
 
     public void enviarOrcamento(Orcamento orcamento) {
@@ -43,7 +46,7 @@ public class WhatsappNotificationService {
         for (OrcamentoItem oi : orcamento.getItens()) {
             Item item = oi.getItem();
             String dim = item.getDimensao() != null && !item.getDimensao().isEmpty() ? " (" + item.getDimensao() + ")" : "";
-            double subtotal = item.getPrecoUnitario() * oi.getQuantidade();
+            BigDecimal subtotal = item.getPrecoUnitario().multiply(BigDecimal.valueOf(oi.getQuantidade()));
             sb.append("- ").append(item.getDescricao()).append(dim)
                     .append(" x ").append(oi.getQuantidade())
                     .append(" = R$ ").append(df.format(subtotal)).append("\n");
